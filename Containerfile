@@ -1,7 +1,4 @@
-# Containerfile-u-root
-# Build u-root for arm64 in a container
-
-FROM golang:1.22 as builder
+FROM golang:1.25 as builder
 
 # Install git
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
