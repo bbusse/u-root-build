@@ -1,0 +1,47 @@
+---
+name: Extract and release build artifact
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+    branches:
+      - '**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  extract-artifacts:
+    name: Extract ${{ matrix.artifact }} (${{ matrix.arch }})
+    strategy:
+      # Each artifact is released independently - one failing extract
+      # must not strand the others
+      fail-fast: false
+      # Containerfile's final "FROM scratch as export-stage" places these
+      # at the image root, one per layer. Must stay in sync with the
+      # COPY lines there and with the arches built by
+      # build-u-root-arm64.yml.
+      matrix:
+        include:
+          - arch: arm64
+            artifact: u-root-arm64
+          - arch: arm64
+            artifact: initramfs-arm64.cpio
+    uses: bbusse/github-workflows/.github/workflows/container-extract-and-release-artifact.yml@dev
+    with:
+      platform: linux/${{ matrix.arch }}
+      # Anchored regexp, not a glob - fed straight to
+      # wait-on-check-action's check-regexp. Matches the container build
+      # ("Build (arm64) / Build u-root (arm64)") that pushes the image
+      # this job pulls from.
+      wait-for-job: '^Build '
+      image: ghcr.io/bbusse/u-root-${{ matrix.arch }}:latest
+      filename: ${{ matrix.artifact }}
+      release: true
+      release_tag: latest
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
