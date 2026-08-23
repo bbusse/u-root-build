@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [arm64]
+        arch: [amd64, arm64]
     uses: bbusse/github-workflows/.github/workflows/container-extract-artifacts.yml@dev
     with:
       wait_for_job: '^Build '

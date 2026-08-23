@@ -8,12 +8,18 @@ WORKDIR /src
 RUN git clone https://github.com/u-root/u-root.git
 WORKDIR /src/u-root
 
-# Build u-root for arm64
-RUN GOARCH=arm64 GOOS=linux go build -o u-root-arm64 .
+# TARGETARCH is set by the builder from --platform, so GOARCH always matches
+# the platform this stage runs on. That keeps the initramfs step below native:
+# it executes the binary just built, which would need emulation otherwise.
+ARG TARGETARCH
+
+# Build u-root
+RUN GOARCH=${TARGETARCH} GOOS=linux go build -o u-root-${TARGETARCH} .
 
 # Build initramfs
-RUN GOARCH=arm64 GOOS=linux ./u-root-arm64 -build=bb -o initramfs-arm64.cpio
+RUN GOARCH=${TARGETARCH} GOOS=linux ./u-root-${TARGETARCH} -build=bb -o initramfs-${TARGETARCH}.cpio
 
 FROM scratch as export-stage
-COPY --from=builder /src/u-root/u-root-arm64 /u-root-arm64
-COPY --from=builder /src/u-root/initramfs-arm64.cpio /initramfs-arm64.cpio
+ARG TARGETARCH
+COPY --from=builder /src/u-root/u-root-${TARGETARCH} /u-root-${TARGETARCH}
+COPY --from=builder /src/u-root/initramfs-${TARGETARCH}.cpio /initramfs-${TARGETARCH}.cpio

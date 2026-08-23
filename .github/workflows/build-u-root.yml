@@ -17,12 +17,17 @@ jobs:
   build:
     name: Build (${{ matrix.arch }})
     strategy:
+      fail-fast: false
       matrix:
-        arch: [arm64]
-    uses: bbusse/github-workflows/.github/workflows/build-u-root-arm64.yml@dev
+        include:
+          - arch: amd64
+            use_arm_runner: false
+          - arch: arm64
+            use_arm_runner: true
+    uses: bbusse/github-workflows/.github/workflows/build-u-root.yml@dev
     with:
       arch: ${{ matrix.arch }}
-      use_arm_runner: true
+      use_arm_runner: ${{ matrix.use_arm_runner }}
       image_name: u-root
       registry: ghcr.io/bbusse
       tag: latest
